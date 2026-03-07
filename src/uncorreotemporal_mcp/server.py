@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
+import os
+from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
 from uncorreotemporal_mcp.tools import (
+    complete_signup_flow as complete_signup_flow_tool,
     create_signup_inbox as create_signup_inbox_tool,
     extract_otp_code as extract_otp_code_tool,
     extract_verification_link as extract_verification_link_tool,
@@ -13,9 +15,23 @@ from uncorreotemporal_mcp.tools import (
 )
 from uncorreotemporal_mcp.utils.api_client import ApiClient, ApiClientError
 
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 mcp = FastMCP(
     name="uncorreotemporal-mcp",
     json_response=True,
+    host=os.getenv("UCT_MCP_HOST", "0.0.0.0"),
+    port=_env_int("UCT_MCP_PORT", 8000),
+    streamable_http_path=os.getenv("UCT_MCP_PATH", "/mcp"),
 )
 
 
@@ -133,8 +149,43 @@ async def extract_verification_link(
         return _internal_error(exc)
 
 
+@mcp.tool(description="End-to-end signup helper: create inbox, wait for email, extract link and OTP.")
+async def complete_signup_flow(
+    service_name: str,
+    timeout_seconds: int = 90,
+    poll_interval_seconds: int = 3,
+    subject_contains: str | None = None,
+    from_contains: str | None = None,
+    preferred_domains: list[str] | None = None,
+    ttl_minutes: int | None = None,
+) -> dict[str, Any]:
+    try:
+        async with ApiClient() as api:
+            return await complete_signup_flow_tool.run(
+                api=api,
+                service_name=service_name,
+                timeout_seconds=timeout_seconds,
+                poll_interval_seconds=poll_interval_seconds,
+                subject_contains=subject_contains,
+                from_contains=from_contains,
+                preferred_domains=preferred_domains,
+                ttl_minutes=ttl_minutes,
+            )
+    except ApiClientError as exc:
+        return exc.to_dict()
+    except Exception as exc:  # pragma: no cover
+        return _internal_error(exc)
+
+
 def main() -> None:
-    mcp.run(transport="stdio")
+    transport = os.getenv("UCT_MCP_TRANSPORT", "stdio")
+    valid_transports: set[str] = {"stdio", "streamable-http", "sse"}
+    if transport not in valid_transports:
+        raise ValueError(
+            f"Invalid UCT_MCP_TRANSPORT '{transport}'. Use one of: {', '.join(sorted(valid_transports))}"
+        )
+
+    mcp.run(transport=transport)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":

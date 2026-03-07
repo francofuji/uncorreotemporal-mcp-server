@@ -1,0 +1,24 @@
+{
+  "name": "uncorreotemporal-mcp",
+  "description": "Temporary email MCP server for autonomous agent signup workflows.",
+  "repository": "https://github.com/francofuji/uncorreotemporal-mcp-server",
+  "docs_url": "https://uncorreotemporal.com/docs/mcp",
+  "transports": ["stdio", "streamable-http"],
+  "runtime": {
+    "command": "uvx",
+    "args": ["uncorreotemporal-mcp"]
+  },
+  "docker": {
+    "image": "uncorreotemporal-mcp",
+    "run": "docker run --rm -i -e UCT_API_KEY=... uncorreotemporal-mcp"
+  },
+  "env": ["UCT_API_KEY", "UCT_API_BASE", "UCT_HTTP_TIMEOUT_SECONDS"],
+  "tools": [
+    "create_signup_inbox",
+    "wait_for_verification_email",
+    "get_latest_email",
+    "extract_otp_code",
+    "extract_verification_link",
+    "complete_signup_flow"
+  ]
+}
