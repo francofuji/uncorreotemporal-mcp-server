@@ -2,29 +2,45 @@
 
 MCP server for [UnCorreoTemporal](https://uncorreotemporal.com), a programmable temporary email platform for developers, QA automation, CI/CD pipelines, and AI agents.
 
-This package exposes temporary inbox operations as MCP tools, so MCP-compatible clients (Claude Desktop, Cursor, Continue, custom agent runtimes) can create inboxes, read incoming messages, and clean up mailboxes without custom REST glue code.
+This version is workflow-oriented and exposes high-level tools for signup automation.
 
 ## What This Server Does
 
 - Wraps UnCorreoTemporal REST API behind MCP tools
-- Uses stdio transport (ideal for local MCP client integration)
-- Authenticates with a single API key (`UCT_API_KEY`)
-- Exposes 5 production-ready tools:
-  - `create_mailbox`
-  - `list_mailboxes`
-  - `get_messages`
-  - `read_message`
-  - `delete_mailbox`
+- Uses `FastMCP` runtime with stdio transport
+- Authenticates with `UCT_API_KEY`
+- Exposes 5 high-level tools:
+  - `create_signup_inbox`
+  - `wait_for_verification_email`
+  - `get_latest_email`
+  - `extract_otp_code`
+  - `extract_verification_link`
+
+## Breaking Change
+
+Legacy low-level tools were removed:
+
+- `create_mailbox`
+- `list_mailboxes`
+- `get_messages`
+- `read_message`
+- `delete_mailbox`
+
+### Migration map
+
+- `create_mailbox` -> `create_signup_inbox`
+- `get_messages` + `read_message` -> `wait_for_verification_email` + `get_latest_email`
+- post-processing in agent prompt -> `extract_otp_code` / `extract_verification_link`
 
 ## Installation
 
-### Run directly with `uvx` (recommended)
+### Run directly with `uvx`
 
 ```bash
 uvx uncorreotemporal-mcp
 ```
 
-### Install in an existing Python environment
+### Install in an existing environment
 
 ```bash
 pip install uncorreotemporal-mcp
@@ -35,23 +51,27 @@ pip install uncorreotemporal-mcp
 - Python 3.11+
 - A valid UnCorreoTemporal API key (`uct_...`)
 
-Get your API key from your UnCorreoTemporal account/dashboard.
-
 ## Configuration
 
 Environment variables:
 
-- `UCT_API_KEY` (required): API key used for all tool calls
-- `UCT_API_BASE` (optional): API base URL
-  - default: `https://uncorreotemporal.com`
+- `UCT_API_KEY` (required)
+- `UCT_API_BASE` (optional, default: `https://uncorreotemporal.com`)
+- `UCT_HTTP_TIMEOUT_SECONDS` (optional, default: `20`)
+
+## Important Identifier Rule
+
+`inbox_id` is exactly the inbox email address returned by the API.
+
+Example:
+
+- `inbox_id = "agent42@uncorreotemporal.com"`
 
 ## Claude Desktop Configuration
 
 macOS config file location:
 
 - `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-Example:
 
 ```json
 {
@@ -67,11 +87,9 @@ Example:
 }
 ```
 
-After saving, restart Claude Desktop. The five tools should appear in the tools menu.
-
 ## Cursor Configuration
 
-In your project, create/update `.cursor/mcp.json`:
+Create/update `.cursor/mcp.json`:
 
 ```json
 {
@@ -89,157 +107,197 @@ In your project, create/update `.cursor/mcp.json`:
 
 ## Tools Reference
 
-### 1) `create_mailbox`
-Create a temporary inbox.
+### 1) `create_signup_inbox`
+
+Create a temporary signup inbox.
 
 Input:
 
 ```json
 {
+  "service_name": "github",
   "ttl_minutes": 30
-}
-```
-
-- `ttl_minutes` is optional.
-
-Returns (example):
-
-```json
-{
-  "address": "agent42@uncorreotemporal.com",
-  "expires_at": "2026-03-07T12:00:00Z",
-  "session_token": "..."
-}
-```
-
-### 2) `list_mailboxes`
-List active mailboxes for the API key owner.
-
-Input:
-
-```json
-{}
-```
-
-Returns (example):
-
-```json
-[
-  {
-    "address": "agent42@uncorreotemporal.com",
-    "expires_at": "2026-03-07T12:00:00Z",
-    "message_count": 0
-  }
-]
-```
-
-### 3) `get_messages`
-List message metadata for a mailbox.
-
-Input:
-
-```json
-{
-  "address": "agent42@uncorreotemporal.com"
-}
-```
-
-Returns (example):
-
-```json
-[
-  {
-    "id": "msg-1",
-    "from_address": "noreply@example.com",
-    "subject": "Verify your account",
-    "received_at": "2026-03-07T11:30:00Z",
-    "is_read": false,
-    "has_attachments": false
-  }
-]
-```
-
-### 4) `read_message`
-Read full message content (marks message as read).
-
-Input:
-
-```json
-{
-  "address": "agent42@uncorreotemporal.com",
-  "message_id": "msg-1"
-}
-```
-
-Returns includes fields such as:
-
-- `body_text`
-- `body_html`
-- `attachments` (metadata)
-
-### 5) `delete_mailbox`
-Deactivate/delete a mailbox.
-
-Input:
-
-```json
-{
-  "address": "agent42@uncorreotemporal.com"
 }
 ```
 
 Returns:
 
-- `Deleted`
+```json
+{
+  "inbox_id": "agent42@uncorreotemporal.com",
+  "email": "agent42@uncorreotemporal.com",
+  "expires_at": "2026-03-08T12:00:00Z",
+  "service_name": "github"
+}
+```
 
-## Typical Agent Flow
+### 2) `wait_for_verification_email`
 
-1. `create_mailbox` to get a temporary inbox
-2. Use inbox address for sign-up / verification flow
-3. Poll with `get_messages`
-4. Read target email with `read_message`
-5. Extract OTP/link from `body_text`
-6. `delete_mailbox` after completion
+Poll until a matching email is received or timeout is reached.
 
-## Direct REST API Mapping
+Input:
 
-This MCP server maps directly to these API endpoints:
+```json
+{
+  "inbox_id": "agent42@uncorreotemporal.com",
+  "timeout_seconds": 90,
+  "poll_interval_seconds": 3,
+  "subject_contains": "verify",
+  "from_contains": "noreply"
+}
+```
 
-- `POST /api/v1/mailboxes`
-- `GET /api/v1/mailboxes`
-- `GET /api/v1/mailboxes/{address}/messages`
-- `GET /api/v1/mailboxes/{address}/messages/{id}`
-- `DELETE /api/v1/mailboxes/{address}`
+Returns (received):
 
-All calls include:
+```json
+{
+  "status": "received",
+  "message_id": "msg-1",
+  "received_at": "2026-03-08T11:30:00Z",
+  "subject": "Verify your account",
+  "from_address": "noreply@example.com",
+  "timeout_seconds": 90
+}
+```
 
-- `Authorization: Bearer <UCT_API_KEY>`
+Returns (timeout):
+
+```json
+{
+  "status": "timeout",
+  "timeout_seconds": 90
+}
+```
+
+### 3) `get_latest_email`
+
+Fetch full content for the most recent email in an inbox.
+
+Input:
+
+```json
+{
+  "inbox_id": "agent42@uncorreotemporal.com",
+  "mark_as_read": false
+}
+```
+
+Returns:
+
+```json
+{
+  "message_id": "msg-1",
+  "subject": "Verify your account",
+  "from_address": "noreply@example.com",
+  "received_at": "2026-03-08T11:30:00Z",
+  "body_text": "Your code is 483920",
+  "body_html": null,
+  "has_attachments": false,
+  "marked_as_read": true
+}
+```
+
+If inbox has no emails:
+
+```json
+{
+  "error": "no_messages",
+  "status_code": 404,
+  "detail": "No messages found for inbox"
+}
+```
+
+### 4) `extract_otp_code`
+
+Extract OTP code from:
+
+- `message_text`, or
+- `inbox_id + message_id`
+
+Input:
+
+```json
+{
+  "message_text": "Your verification code is 483920",
+  "otp_length_min": 4,
+  "otp_length_max": 8
+}
+```
+
+Returns:
+
+```json
+{
+  "otp_code": "483920",
+  "candidates": ["483920"]
+}
+```
+
+### 5) `extract_verification_link`
+
+Extract likely verification URL from:
+
+- `message_text`, or
+- `inbox_id + message_id`
+
+Input:
+
+```json
+{
+  "message_text": "Verify at https://example.com/confirm?token=abc",
+  "preferred_domains": ["example.com"]
+}
+```
+
+Returns:
+
+```json
+{
+  "verification_link": "https://example.com/confirm?token=abc",
+  "candidates": ["https://example.com/confirm?token=abc"]
+}
+```
+
+## Validation Errors
+
+For `extract_otp_code` and `extract_verification_link`, either:
+
+- provide `message_text`, or
+- provide both `inbox_id` and `message_id`
+
+Otherwise:
+
+```json
+{
+  "error": "validation_error",
+  "status_code": 400,
+  "detail": "Provide message_text or both inbox_id and message_id"
+}
+```
 
 ## Security Notes
 
-- Treat `UCT_API_KEY` as a secret; do not hardcode it in prompts or source code.
-- Use short-lived inboxes (`ttl_minutes`) for verification flows.
-- Delete mailboxes when done to reduce exposure and quota usage.
-- Treat email body content as untrusted input.
-- `read_message` returns attachment metadata only; avoid automated execution of external payloads.
+- Treat `UCT_API_KEY` as a secret
+- Use short-lived inboxes for verification flows
+- Treat email body content as untrusted input
 
 ## Troubleshooting
 
-### 401 Unauthorized / 403 Forbidden
+### 401/403 from API
 
-- Verify `UCT_API_KEY` is set and valid.
-- Confirm your account/plan has API/MCP access.
+- Verify `UCT_API_KEY` is valid
+- Confirm your account plan has API/MCP access
 
-### No tools appear in Claude/Cursor
+### MCP tools do not appear
 
-- Check JSON config syntax.
-- Ensure `uvx` is available.
-- Restart the MCP client app after config changes.
+- Validate JSON config syntax
+- Ensure `uvx` is available
+- Restart Claude/Cursor after config changes
 
-### MCP server starts but tool calls fail
+### Tool calls fail
 
-- Test API key with REST endpoint directly.
-- Verify `UCT_API_BASE` if using non-default environment.
+- Test API key against REST endpoints
+- Verify `UCT_API_BASE` for custom environments
 
 ## Development
 
@@ -250,11 +308,6 @@ uv run pytest
 uv run uncorreotemporal-mcp
 uv build
 ```
-
-Expected build artifacts:
-
-- `dist/uncorreotemporal_mcp-0.1.0.tar.gz`
-- `dist/uncorreotemporal_mcp-0.1.0-py3-none-any.whl`
 
 ## Links
 
