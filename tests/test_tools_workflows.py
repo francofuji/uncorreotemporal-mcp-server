@@ -3,6 +3,7 @@ import pytest
 import respx
 
 from uncorreotemporal_mcp.server import (
+    complete_signup_flow,
     create_signup_inbox,
     extract_otp_code,
     extract_verification_link,
@@ -18,6 +19,7 @@ BASE = "https://uncorreotemporal.com"
 async def test_contract_only_high_level_tools_registered():
     names = sorted(tool.name for tool in await mcp.list_tools())
     assert names == [
+        "complete_signup_flow",
         "create_signup_inbox",
         "extract_otp_code",
         "extract_verification_link",

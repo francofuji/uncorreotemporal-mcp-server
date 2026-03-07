@@ -4,4 +4,5 @@ __all__ = [
     "get_latest_email",
     "extract_otp_code",
     "extract_verification_link",
+    "complete_signup_flow",
 ]

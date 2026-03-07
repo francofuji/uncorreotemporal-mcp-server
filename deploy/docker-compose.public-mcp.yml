@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  mcp-public:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: uncorreotemporal-mcp:latest
+    environment:
+      UCT_API_KEY: ${UCT_API_KEY}
+      UCT_API_BASE: ${UCT_API_BASE:-https://uncorreotemporal.com}
+      UCT_MCP_TRANSPORT: streamable-http
+      UCT_MCP_HOST: 0.0.0.0
+      UCT_MCP_PORT: 8000
+      UCT_MCP_PATH: /mcp
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
