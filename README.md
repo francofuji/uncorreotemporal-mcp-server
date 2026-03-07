@@ -25,7 +25,7 @@ Or run local project version:
 
 ```bash
 UCT_API_KEY=uct_your_key_here \
-uv run --project /Users/francofuji/Projects/uncorreotemporal/src/uncorreotemporal-mcp uncorreotemporal-mcp
+uv run uncorreotemporal-mcp
 ```
 
 ## Minimal Workflow Example
