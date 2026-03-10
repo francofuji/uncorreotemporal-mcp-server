@@ -1,0 +1,31 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["francofuji"],
+  "name": "UnCorreoTemporal",
+  "description": "Disposable email MCP server for autonomous AI agents. Create labeled temporary inboxes, wait for verification emails, extract OTP codes and confirmation links — zero human intervention required.",
+  "license": "MIT",
+  "homepage": "https://uncorreotemporal.com",
+  "documentation": "https://uncorreotemporal.com/docs/mcp",
+  "tools": [
+    {
+      "name": "create_signup_inbox",
+      "description": "Creates a labeled temporary inbox for a given service. Returns the email address to use for registration."
+    },
+    {
+      "name": "wait_for_verification_email",
+      "description": "Auto-polls until a verification email arrives (no manual polling needed). Returns the full email once received."
+    },
+    {
+      "name": "get_latest_email",
+      "description": "Reads the latest email in the inbox with full body (text + HTML)."
+    },
+    {
+      "name": "extract_otp_code",
+      "description": "Extracts OTP code (4–8 digits) from a message body."
+    },
+    {
+      "name": "extract_verification_link",
+      "description": "Extracts verification or confirmation link from a message body."
+    }
+  ]
+}

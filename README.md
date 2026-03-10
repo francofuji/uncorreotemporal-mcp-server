@@ -2,6 +2,8 @@
 
 MCP server for [UnCorreoTemporal](https://uncorreotemporal.com), focused on autonomous signup and email verification workflows.
 
+[![Glama](https://glama.ai/mcp/servers/francofuji/un-correo-temporal/badge)](https://glama.ai/mcp/servers/francofuji/un-correo-temporal)
+
 ## Architecture Demo
 
 ```text
