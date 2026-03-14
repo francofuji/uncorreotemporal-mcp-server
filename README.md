@@ -1,5 +1,7 @@
 # uncorreotemporal-mcp
 
+[![MCP Badge](https://lobehub.com/badge/mcp/francofuji-uncorreotemporal-mcp-server)](https://lobehub.com/mcp/francofuji-uncorreotemporal-mcp-server)
+
 MCP server for [UnCorreoTemporal](https://uncorreotemporal.com), focused on autonomous signup and email verification workflows.
 
 [![Glama](https://glama.ai/mcp/servers/francofuji/un-correo-temporal/badge)](https://glama.ai/mcp/servers/francofuji/un-correo-temporal)
@@ -16,6 +18,22 @@ Temporary Email MCP Server
    v
 UnCorreoTemporal API
 ```
+
+## Remote Connection (No Installation)
+
+Connect directly to the public endpoint — no local install needed:
+
+```json
+{
+  "mcpServers": {
+    "uncorreotemporal-mcp": {
+      "url": "https://uncorreotemporal.com/mcp"
+    }
+  }
+}
+```
+
+The public endpoint is free to use for testing. For production workloads, set your own `UCT_API_KEY` via local install.
 
 ## Quickstart (30 seconds)
 
