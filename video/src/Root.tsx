@@ -76,7 +76,7 @@ export const RemotionRoot: React.FC = () => {
         height={HEIGHT}
       />
       {/* Individual scene previews */}
-      <Composition id="Intro"                 component={Intro}                 durationInFrames={300}  fps={FPS} width={WIDTH} height={HEIGHT} />
+      <Composition id="Intro"                 component={Intro}                 durationInFrames={450}  fps={FPS} width={WIDTH} height={HEIGHT} />
       <Composition id="SunoIntegration"       component={SunoIntegration}       durationInFrames={900}  fps={FPS} width={WIDTH} height={HEIGHT} />
       <Composition id="ElevenLabsIntegration" component={ElevenLabsIntegration} durationInFrames={900}  fps={FPS} width={WIDTH} height={HEIGHT} />
       <Composition id="MCPTools"              component={MCPTools}              durationInFrames={600}  fps={FPS} width={WIDTH} height={HEIGHT} />

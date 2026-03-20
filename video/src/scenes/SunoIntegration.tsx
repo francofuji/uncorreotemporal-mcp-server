@@ -18,7 +18,7 @@ const FlowStep: React.FC<FlowStepProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const s = spring({ frame: frame - startFrame, fps, config: { damping: 16, stiffness: 110 } });
+  const s = spring({ frame: frame - startFrame, fps, config: { damping: 30, stiffness: 100 } });
   const opacity    = interpolate(s, [0, 1], [0, 1]);
   const translateX = interpolate(s, [0, 1], [-24, 0]);
 

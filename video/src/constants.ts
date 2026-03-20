@@ -34,12 +34,12 @@ export const FONT_SANS   = "'Inter', 'Segoe UI', Arial, sans-serif";
 
 // ─── Scene frame boundaries ──────────────────────────────────────────────────
 export const SCENES = {
-  intro:              { start: 0,    end: 300  },   // 0:00 – 0:10
-  sunoIntegration:    { start: 300,  end: 1200 },   // 0:10 – 0:40
-  elevenLabsInteg:    { start: 1200, end: 2100 },   // 0:40 – 1:10
-  mcpTools:           { start: 2100, end: 2700 },   // 1:10 – 1:30
-  colabDemo:          { start: 2700, end: 4050 },   // 1:30 – 2:15
-  cta:                { start: 4050, end: 4500 },   // 2:15 – 2:30
+  intro:              { start: 0,    end: 450  },   // 0:00 – 0:15
+  sunoIntegration:    { start: 450,  end: 1350 },   // 0:15 – 0:45
+  elevenLabsInteg:    { start: 1350, end: 2250 },   // 0:45 – 1:15
+  mcpTools:           { start: 2250, end: 2850 },   // 1:15 – 1:35
+  colabDemo:          { start: 2850, end: 4200 },   // 1:35 – 2:20
+  cta:                { start: 4200, end: 4650 },   // 2:20 – 2:35
 };
 
-export const TOTAL_FRAMES = 4500;
+export const TOTAL_FRAMES = 4650;
