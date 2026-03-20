@@ -38,8 +38,8 @@ export const SCENES = {
   sunoIntegration:    { start: 450,  end: 1260 },   // 0:15 – 0:42
   elevenLabsInteg:    { start: 1260, end: 2070 },   // 0:42 – 1:09
   mcpTools:           { start: 2070, end: 2670 },   // 1:09 – 1:29
-  colabDemo:          { start: 2670, end: 4020 },   // 1:29 – 2:14
-  cta:                { start: 4020, end: 4470 },   // 2:14 – 2:29
+  colabDemo:          { start: 2670, end: 3570 },   // 1:29 – 1:59
+  cta:                { start: 3570, end: 4020 },   // 1:59 – 2:14
 };
 
-export const TOTAL_FRAMES = 4470;
+export const TOTAL_FRAMES = 4020;

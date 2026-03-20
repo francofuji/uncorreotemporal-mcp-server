@@ -80,7 +80,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="SunoIntegration"       component={SunoIntegration}       durationInFrames={810}  fps={FPS} width={WIDTH} height={HEIGHT} />
       <Composition id="ElevenLabsIntegration" component={ElevenLabsIntegration} durationInFrames={810}  fps={FPS} width={WIDTH} height={HEIGHT} />
       <Composition id="MCPTools"              component={MCPTools}              durationInFrames={600}  fps={FPS} width={WIDTH} height={HEIGHT} />
-      <Composition id="ColabDemo"             component={ColabDemo}             durationInFrames={1350} fps={FPS} width={WIDTH} height={HEIGHT} />
+      <Composition id="ColabDemo"             component={ColabDemo}             durationInFrames={900}  fps={FPS} width={WIDTH} height={HEIGHT} />
       <Composition id="CTA"                   component={CTA}                   durationInFrames={450}  fps={FPS} width={WIDTH} height={HEIGHT} />
     </>
   );
