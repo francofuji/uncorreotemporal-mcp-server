@@ -1,31 +1,10 @@
 import React from "react";
 import { interpolate, useCurrentFrame } from "remotion";
 import { C, FONT_MONO, FONT_SANS, WIDTH, HEIGHT } from "../constants";
-import { ColabCell, ProgressBar } from "../components/ColabCell";
+import { ColabCell } from "../components/ColabCell";
 import { OutputBlock } from "../components/OutputBlock";
 
-// ─── Code strings for each cell ──────────────────────────────────────────────
-const CELL1_CODE = `!pip install mcp httpx requests -q`;
-
-const CELL2_CODE = `import asyncio, json
-from mcp import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
-
-UCT_API_KEY = "uct_your_key_here"
-MCP_URL = "https://uncorreotemporal.com/mcp"
-
-async def list_tools():
-    async with streamablehttp_client(
-        url=MCP_URL,
-        headers={"Authorization": f"Bearer {UCT_API_KEY}"}
-    ) as (read, write, _):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            tools = await session.list_tools()
-            return [t.name for t in tools.tools]
-
-asyncio.run(list_tools())`;
-
+// ─── Abridged demo: cells 3 + 4 only ─────────────────────────────────────────
 const CELL3_CODE = `async def create_inbox(service_name: str):
     async with streamablehttp_client(
         url=MCP_URL, headers={"Authorization": f"Bearer {UCT_API_KEY}"}
@@ -39,60 +18,36 @@ const CELL3_CODE = `async def create_inbox(service_name: str):
             return json.loads(result.content[0].text)
 
 inbox = asyncio.run(create_inbox("MyService"))
-print(f"Inbox address: {inbox['email']}")`;
+print(f"Inbox: {inbox['email']}")`;
 
-const CELL4_CODE = `async def complete_flow(service_name: str):
-    async with streamablehttp_client(
-        url=MCP_URL, headers={"Authorization": f"Bearer {UCT_API_KEY}"}
-    ) as (read, write, _):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            result = await session.call_tool(
-                "complete_signup_flow",
-                {"service_name": service_name,
-                 "timeout_seconds": 90,
-                 "ttl_minutes": 15}
-            )
-            return json.loads(result.content[0].text)
+const CELL4_CODE = `# One call — creates inbox, waits, extracts link + OTP
+flow = asyncio.run(session.call_tool(
+    "complete_signup_flow",
+    {"service_name": "MyService",
+     "timeout_seconds": 90,
+     "ttl_minutes": 15}
+))
+result = json.loads(flow.content[0].text)
+print(f"Status: {result['status']}")
+print(f"Email:  {result['email']}")
+print(f"Link:   {result['verification_link']}")
+print(f"OTP:    {result['otp_code']}")`;
 
-flow = asyncio.run(complete_flow("MyService"))
-print(f"Status: {flow['status']}")
-print(f"Email:  {flow['email']}")
-print(f"Link:   {flow['verification_link']}")`;
+const C3_START   = 30;
+const C3_TYPED   = 100;
+const C3_EXEC    = 110;
+const C3_OUT     = 115;
 
-// ─── Frame timing (scene-local, scene starts at frame 1500 absolute) ──────────
-// Cell 1: types at 0, executes at 50, output bar 55–95
-const C1_START    = 0;
-const C1_TYPED    = 40;
-const C1_EXEC     = 50;
-const C1_BAR      = 55;
-const C1_BAR_DUR  = 40;
-
-// Cell 2: starts at 110
-const C2_START    = 110;
-const C2_TYPED    = 200;
-const C2_EXEC     = 215;
-const C2_OUT      = 220;
-
-// Cell 3: starts at 320
-const C3_START    = 320;
-const C3_TYPED    = 390;
-const C3_EXEC     = 400;
-const C3_OUT      = 405;
-
-// Cell 4: starts at 510
-const C4_START    = 510;
-const C4_TYPED    = 610;
-const C4_EXEC     = 622;
-const C4_OUT      = 628;
+const C4_START   = 230;
+const C4_TYPED   = 320;
+const C4_EXEC    = 332;
+const C4_OUT     = 338;
 
 export const ColabDemo: React.FC = () => {
   const frame = useCurrentFrame();
 
-  // Header
   const headerOpacity = interpolate(frame, [0, 15], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
+    extrapolateLeft: "clamp", extrapolateRight: "clamp",
   });
 
   return (
@@ -103,22 +58,21 @@ export const ColabDemo: React.FC = () => {
         background: C.bg,
         display: "flex",
         flexDirection: "column",
-        padding: "40px 100px",
+        padding: "48px 120px",
         gap: 0,
         overflow: "hidden",
       }}
     >
-      {/* Colab-style top bar */}
+      {/* Colab-style header */}
       <div
         style={{
           opacity: headerOpacity,
           display: "flex",
           alignItems: "center",
           gap: 16,
-          marginBottom: 24,
+          marginBottom: 28,
         }}
       >
-        {/* Colab logo proxy */}
         <div
           style={{
             width: 32,
@@ -127,14 +81,7 @@ export const ColabDemo: React.FC = () => {
             background: `linear-gradient(135deg, ${C.yellow}, ${C.red})`,
           }}
         />
-        <span
-          style={{
-            fontFamily: FONT_SANS,
-            fontSize: 20,
-            color: C.subtext,
-            fontWeight: 500,
-          }}
-        >
+        <span style={{ fontFamily: FONT_SANS, fontSize: 20, color: C.subtext, fontWeight: 500 }}>
           colab-email-agent.ipynb
         </span>
         <span
@@ -149,44 +96,24 @@ export const ColabDemo: React.FC = () => {
         </span>
       </div>
 
-      {/* ── Cell 1: pip install ── */}
+      {/* Subheading */}
+      <div
+        style={{
+          opacity: headerOpacity,
+          fontFamily: FONT_SANS,
+          fontSize: 22,
+          color: C.subtext,
+          marginBottom: 24,
+        }}
+      >
+        Full end-to-end flow — fits in{" "}
+        <span style={{ color: C.accent, fontWeight: 600 }}>4 cells</span>
+        {" "}in Google Colab
+      </div>
+
+      {/* Cell 3: create_inbox */}
       <ColabCell
         cellNumber={1}
-        code={CELL1_CODE}
-        startFrame={C1_START}
-        typingDuration={C1_TYPED}
-        executedAt={C1_EXEC}
-        output={
-          <ProgressBar startFrame={C1_BAR} duration={C1_BAR_DUR} />
-        }
-      />
-
-      {/* ── Cell 2: list_tools ── */}
-      <ColabCell
-        cellNumber={2}
-        code={CELL2_CODE}
-        startFrame={C2_START}
-        typingDuration={C2_TYPED - C2_START}
-        executedAt={C2_EXEC}
-        output={
-          <OutputBlock
-            startFrame={C2_OUT}
-            staggerFrames={10}
-            lines={[
-              { text: "['create_signup_inbox'," },
-              { text: " 'wait_for_verification_email'," },
-              { text: " 'get_latest_email'," },
-              { text: " 'extract_otp_code'," },
-              { text: " 'extract_verification_link'," },
-              { text: " 'complete_signup_flow']", color: C.green, bold: true },
-            ]}
-          />
-        }
-      />
-
-      {/* ── Cell 3: create_inbox ── */}
-      <ColabCell
-        cellNumber={3}
         code={CELL3_CODE}
         startFrame={C3_START}
         typingDuration={C3_TYPED - C3_START}
@@ -195,17 +122,15 @@ export const ColabDemo: React.FC = () => {
           <OutputBlock
             startFrame={C3_OUT}
             lines={[
-              { text: "Inbox address: ", color: C.subtext },
-              { text: "coral-tiger-17@uncorreotemporal.com", color: C.teal, bold: true },
-              { text: "Expires at:    2026-03-20T10:45:00Z", color: C.muted },
+              { text: "Inbox: coral-tiger-17@uncorreotemporal.com", color: C.teal, bold: true },
             ]}
           />
         }
       />
 
-      {/* ── Cell 4: complete_signup_flow ── */}
+      {/* Cell 4: complete_signup_flow */}
       <ColabCell
-        cellNumber={4}
+        cellNumber={2}
         code={CELL4_CODE}
         startFrame={C4_START}
         typingDuration={C4_TYPED - C4_START}
@@ -213,15 +138,46 @@ export const ColabDemo: React.FC = () => {
         output={
           <OutputBlock
             startFrame={C4_OUT}
-            staggerFrames={15}
+            staggerFrames={18}
             lines={[
-              { text: "Status: success",                                          color: C.green, bold: true },
-              { text: "Email:  coral-tiger-17@uncorreotemporal.com",              color: C.teal },
-              { text: "Link:   https://myservice.com/verify?token=eyJh...",       color: C.blue },
+              { text: "Status: success",                                     color: C.green, bold: true },
+              { text: "Email:  coral-tiger-17@uncorreotemporal.com",         color: C.teal },
+              { text: "Link:   https://myservice.com/verify?token=eyJh...",  color: C.blue },
+              { text: "OTP:    None  (this service uses links, not OTPs)",   color: C.muted },
             ]}
           />
         }
       />
+
+      {/* Open in Colab badge */}
+      <div
+        style={{
+          opacity: interpolate(frame, [600, 630], [0, 1], {
+            extrapolateLeft: "clamp", extrapolateRight: "clamp",
+          }),
+          marginTop: 24,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <span style={{ fontFamily: FONT_SANS, fontSize: 18, color: C.muted }}>
+          Try it yourself →
+        </span>
+        <div
+          style={{
+            background: C.surface,
+            border: `1px solid ${C.sapphire}`,
+            borderRadius: 8,
+            padding: "8px 20px",
+            fontFamily: FONT_MONO,
+            fontSize: 17,
+            color: C.sapphire,
+          }}
+        >
+          Open in Colab ↗
+        </div>
+      </div>
     </div>
   );
 };

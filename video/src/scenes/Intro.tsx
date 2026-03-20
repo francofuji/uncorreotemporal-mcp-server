@@ -6,34 +6,27 @@ export const Intro: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Line 1: "AI agents can execute code."
-  const line1Spring = spring({ frame, fps, config: { damping: 18, stiffness: 100 } });
-  const line1Opacity = interpolate(line1Spring, [0, 1], [0, 1]);
-  const line1Y       = interpolate(line1Spring, [0, 1], [20, 0]);
+  // Three tool logos fade in staggered
+  const tools = [
+    { name: "Remotion",  emoji: "🎬", color: C.accent,   delay: 0  },
+    { name: "Suno",      emoji: "🎵", color: C.green,    delay: 15 },
+    { name: "ElevenLabs",emoji: "🎙️", color: C.sapphire, delay: 30 },
+  ];
 
-  // Line 2: "But they can't check email." — starts at frame 30
-  const line2Spring = spring({ frame: frame - 30, fps, config: { damping: 18, stiffness: 100 } });
-  const line2Opacity = interpolate(line2Spring, [0, 1], [0, 1]);
-  const line2Y       = interpolate(line2Spring, [0, 1], [20, 0]);
+  // Main headline appears at frame 50
+  const headlineS = spring({ frame: frame - 50, fps, config: { damping: 18, stiffness: 90 } });
+  const headlineOpacity    = interpolate(headlineS, [0, 1], [0, 1]);
+  const headlineTranslateY = interpolate(headlineS, [0, 1], [20, 0]);
 
-  // Cursor blink after line 2 appears
-  const cursorVisible = frame > 60 && Math.floor((frame - 60) / 18) % 2 === 0;
-
-  // Subtitle fades in at frame 120
-  const subtitleOpacity = interpolate(frame, [120, 145], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
+  // Connector line
+  const lineOpacity = interpolate(frame, [100, 120], [0, 1], {
+    extrapolateLeft: "clamp", extrapolateRight: "clamp",
   });
 
-  // URL badge at frame 180
-  const badgeOpacity = interpolate(frame, [180, 210], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const badgeScale = interpolate(frame, [180, 210], [0.85, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  // Subline
+  const subS = spring({ frame: frame - 120, fps, config: { damping: 18, stiffness: 80 } });
+  const subOpacity = interpolate(subS, [0, 1], [0, 1]);
+  const subY       = interpolate(subS, [0, 1], [12, 0]);
 
   return (
     <div
@@ -45,89 +38,116 @@ export const Intro: React.FC = () => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 0,
+        gap: 48,
       }}
     >
-      {/* Subtle grid background */}
+      {/* Subtle dot grid */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           backgroundImage: `radial-gradient(${C.overlay} 1px, transparent 1px)`,
           backgroundSize: "48px 48px",
-          opacity: 0.3,
+          opacity: 0.25,
         }}
       />
 
-      {/* Main text block */}
-      <div style={{ position: "relative", textAlign: "center", maxWidth: 1100 }}>
+      {/* Three tool badges */}
+      <div style={{ display: "flex", gap: 40, alignItems: "center", position: "relative" }}>
+        {tools.map((tool, i) => {
+          const s = spring({ frame: frame - tool.delay, fps, config: { damping: 16, stiffness: 120 } });
+          const opacity = interpolate(s, [0, 1], [0, 1]);
+          const scale   = interpolate(s, [0, 1], [0.7, 1]);
+
+          return (
+            <React.Fragment key={tool.name}>
+              <div
+                style={{
+                  opacity,
+                  transform: `scale(${scale})`,
+                  background: C.surface,
+                  border: `2px solid ${tool.color}`,
+                  borderRadius: 16,
+                  padding: "20px 32px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 8,
+                  minWidth: 180,
+                }}
+              >
+                <span style={{ fontSize: 40 }}>{tool.emoji}</span>
+                <span
+                  style={{
+                    fontFamily: FONT_SANS,
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: tool.color,
+                  }}
+                >
+                  {tool.name}
+                </span>
+              </div>
+              {/* Arrow between badges */}
+              {i < tools.length - 1 && (
+                <span
+                  style={{
+                    opacity: lineOpacity,
+                    fontFamily: FONT_MONO,
+                    fontSize: 28,
+                    color: C.muted,
+                  }}
+                >
+                  →
+                </span>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {/* Headline */}
+      <div
+        style={{
+          opacity: headlineOpacity,
+          transform: `translateY(${headlineTranslateY}px)`,
+          textAlign: "center",
+          maxWidth: 900,
+        }}
+      >
         <div
           style={{
-            opacity: line1Opacity,
-            transform: `translateY(${line1Y}px)`,
             fontFamily: FONT_SANS,
-            fontSize: 72,
+            fontSize: 52,
             fontWeight: 700,
             color: C.text,
-            lineHeight: 1.2,
-            marginBottom: 8,
+            lineHeight: 1.25,
           }}
         >
-          AI agents can execute code.
+          Three AI tools built this video.
         </div>
+      </div>
 
+      {/* Subline */}
+      <div
+        style={{
+          opacity: subOpacity,
+          transform: `translateY(${subY}px)`,
+          textAlign: "center",
+          maxWidth: 800,
+        }}
+      >
         <div
           style={{
-            opacity: line2Opacity,
-            transform: `translateY(${line2Y}px)`,
-            fontFamily: FONT_SANS,
-            fontSize: 72,
-            fontWeight: 700,
-            lineHeight: 1.2,
-            marginBottom: 32,
-          }}
-        >
-          <span style={{ color: C.red }}>But they can't check email.</span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 4,
-              height: 68,
-              background: C.red,
-              marginLeft: 6,
-              verticalAlign: "middle",
-              opacity: cursorVisible ? 1 : 0,
-            }}
-          />
-        </div>
-
-        {/* Subtitle */}
-        <div
-          style={{
-            opacity: subtitleOpacity,
             fontFamily: FONT_SANS,
             fontSize: 28,
             color: C.subtext,
-            marginBottom: 48,
+            lineHeight: 1.5,
           }}
         >
-          Here's how to fix that — in Google Colab, in 5 minutes.
-        </div>
-
-        {/* URL badge */}
-        <div
-          style={{
-            opacity: badgeOpacity,
-            transform: `scale(${badgeScale})`,
-            display: "inline-block",
-            background: C.surface,
-            border: `1px solid ${C.overlay}`,
-            borderRadius: 24,
-            padding: "10px 28px",
-          }}
-        >
-          <span style={{ fontFamily: FONT_MONO, fontSize: 22, color: C.accent }}>
-            uncorreotemporal.com
+          Each one needed an email to sign up.{" "}
+          <span style={{ color: C.accent, fontWeight: 600 }}>
+            A temporary inbox connected them.
           </span>
         </div>
       </div>

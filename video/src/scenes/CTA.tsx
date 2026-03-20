@@ -6,19 +6,14 @@ export const CTA: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const s1 = spring({ frame,      fps, config: { damping: 18, stiffness: 100 } });
-  const s2 = spring({ frame: frame - 20, fps, config: { damping: 18, stiffness: 100 } });
-  const s3 = spring({ frame: frame - 45, fps, config: { damping: 18, stiffness: 100 } });
-  const s4 = spring({ frame: frame - 70, fps, config: { damping: 18, stiffness: 100 } });
+  const s1 = spring({ frame,           fps, config: { damping: 18, stiffness: 100 } });
+  const s2 = spring({ frame: frame-20, fps, config: { damping: 18, stiffness: 100 } });
+  const s3 = spring({ frame: frame-45, fps, config: { damping: 18, stiffness: 100 } });
+  const s4 = spring({ frame: frame-70, fps, config: { damping: 18, stiffness: 100 } });
 
-  const fadeIn  = (s: number) => interpolate(s, [0, 1], [0, 1]);
-  const slideUp = (s: number) => interpolate(s, [0, 1], [24, 0]);
-  const scaleIn = (s: number) => interpolate(s, [0, 1], [0.88, 1]);
-
-  const notebookOpacity = interpolate(frame, [95, 120], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  const fade  = (s: number) => interpolate(s, [0, 1], [0, 1]);
+  const up    = (s: number) => interpolate(s, [0, 1], [24, 0]);
+  const scale = (s: number) => interpolate(s, [0, 1], [0.88, 1]);
 
   return (
     <div
@@ -33,7 +28,7 @@ export const CTA: React.FC = () => {
         gap: 0,
       }}
     >
-      {/* Subtle gradient backdrop */}
+      {/* Glow */}
       <div
         style={{
           position: "absolute",
@@ -42,11 +37,11 @@ export const CTA: React.FC = () => {
         }}
       />
 
-      {/* Main URL */}
+      {/* URL */}
       <div
         style={{
-          opacity: fadeIn(s1),
-          transform: `translateY(${slideUp(s1)}px)`,
+          opacity: fade(s1),
+          transform: `translateY(${up(s1)}px)`,
           fontFamily: FONT_MONO,
           fontSize: 80,
           fontWeight: 700,
@@ -61,29 +56,26 @@ export const CTA: React.FC = () => {
       {/* Tagline */}
       <div
         style={{
-          opacity: fadeIn(s2),
-          transform: `translateY(${slideUp(s2)}px)`,
+          opacity: fade(s2),
+          transform: `translateY(${up(s2)}px)`,
           fontFamily: FONT_SANS,
-          fontSize: 30,
+          fontSize: 28,
           color: C.subtext,
           marginBottom: 48,
+          textAlign: "center",
+          maxWidth: 900,
         }}
       >
-        Programmable temporary email infrastructure for AI agents.
+        If your agent needs email — for signups, OTPs, or anything in between —
+        the inbox is one tool call away.
       </div>
 
-      {/* Two action badges */}
-      <div
-        style={{
-          display: "flex",
-          gap: 24,
-          marginBottom: 56,
-        }}
-      >
+      {/* Buttons */}
+      <div style={{ display: "flex", gap: 24, marginBottom: 48 }}>
         <div
           style={{
-            opacity: fadeIn(s3),
-            transform: `scale(${scaleIn(s3)})`,
+            opacity: fade(s3),
+            transform: `scale(${scale(s3)})`,
             background: C.accent,
             borderRadius: 12,
             padding: "18px 40px",
@@ -93,12 +85,12 @@ export const CTA: React.FC = () => {
             color: C.bg,
           }}
         >
-          Try the API — free plan
+          Free plan — no credit card
         </div>
         <div
           style={{
-            opacity: fadeIn(s4),
-            transform: `scale(${scaleIn(s4)})`,
+            opacity: fade(s4),
+            transform: `scale(${scale(s4)})`,
             background: C.surface,
             border: `2px solid ${C.overlay}`,
             borderRadius: 12,
@@ -109,29 +101,33 @@ export const CTA: React.FC = () => {
             color: C.text,
           }}
         >
-          Read the docs  →  /docs/mcp
+          MCP docs → /docs/mcp
         </div>
       </div>
 
-      {/* Colab badge */}
+      {/* Made with badge */}
       <div
         style={{
-          opacity: notebookOpacity,
+          opacity: interpolate(frame, [100, 130], [0, 1], {
+            extrapolateLeft: "clamp", extrapolateRight: "clamp",
+          }),
           display: "flex",
           alignItems: "center",
-          gap: 12,
+          gap: 16,
           background: C.surface,
           border: `1px solid ${C.overlay}`,
           borderRadius: 10,
           padding: "12px 28px",
+          fontFamily: FONT_MONO,
+          fontSize: 17,
+          color: C.muted,
         }}
       >
-        <span style={{ fontFamily: FONT_SANS, fontSize: 20, color: C.muted }}>
-          Companion notebook:
-        </span>
-        <span style={{ fontFamily: FONT_MONO, fontSize: 20, color: C.sapphire }}>
-          Open in Colab  ↗
-        </span>
+        Built with{" "}
+        <span style={{ color: C.text }}>Remotion</span> +
+        <span style={{ color: C.green }}> Suno</span> +
+        <span style={{ color: C.sapphire }}> ElevenLabs</span>
+        <span style={{ color: C.muted }}> — all signed up via uncorreotemporal</span>
       </div>
     </div>
   );
