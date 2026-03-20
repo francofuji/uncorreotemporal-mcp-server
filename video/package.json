@@ -1,0 +1,22 @@
+{
+  "name": "uncorreotemporal-video",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npx remotion studio",
+    "build": "npx remotion render AgentEmailVideo out/agent-email-colab.mp4",
+    "preview": "npx remotion render AgentEmailVideo out/preview.mp4 --frames=1500-1800"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.248",
+    "@remotion/player": "4.0.248",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.248"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "typescript": "5.4.5"
+  }
+}
