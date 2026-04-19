@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.francofuji/uncorreotemporal-mcp-server",
   "title": "UnCorreoTemporal",
-  "description": "Native MCP email server for AI agents — create temporary inboxes, wait for emails, extract OTPs, and automate email verification flows. Built for Claude Desktop, Claude Code, and any MCP-compatible client.",
+  "description": "Temporary email for AI agents: create inboxes, wait for emails, extract OTPs, verify signups.",
   "repository": {
     "url": "https://github.com/francofuji/uncorreotemporal-mcp-server",
     "source": "github"
