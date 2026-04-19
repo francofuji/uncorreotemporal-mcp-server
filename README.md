@@ -36,6 +36,32 @@ Connect directly to the public endpoint — no local install needed:
 
 The public endpoint is free to use for testing. For production workloads, set your own `UCT_API_KEY` via local install.
 
+## Installation
+
+### Claude Code
+
+```bash
+claude mcp add uncorreotemporal -e UCT_API_KEY=uct_your_key_here -- uvx uncorreotemporal-mcp
+```
+
+### Claude Desktop (`claude_desktop_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "uncorreotemporal": {
+      "command": "uvx",
+      "args": ["uncorreotemporal-mcp"],
+      "env": {
+        "UCT_API_KEY": "uct_your_key_here"
+      }
+    }
+  }
+}
+```
+
+Get your API key at [uncorreotemporal.com](https://uncorreotemporal.com).
+
 ## Quickstart (30 seconds)
 
 ```bash
