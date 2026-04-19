@@ -258,3 +258,5 @@ Deployment templates for `https://uncorreotemporal.com/mcp` are in `/deploy`.
 uv run pytest
 uv run uncorreotemporal-mcp
 ```
+
+<!-- mcp-name: io.github.francofuji/uncorreotemporal-mcp-server -->

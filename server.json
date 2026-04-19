@@ -1,0 +1,45 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.francofuji/uncorreotemporal-mcp-server",
+  "title": "UnCorreoTemporal",
+  "description": "Native MCP email server for AI agents — create temporary inboxes, wait for emails, extract OTPs, and automate email verification flows. Built for Claude Desktop, Claude Code, and any MCP-compatible client.",
+  "repository": {
+    "url": "https://github.com/francofuji/uncorreotemporal-mcp-server",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "uncorreotemporal-mcp",
+      "version": "0.1.1",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "UCT_API_KEY",
+          "description": "Your UnCorreoTemporal API key (get one at https://uncorreotemporal.com). Format: uct_...",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "UCT_API_BASE",
+          "description": "API base URL. Defaults to https://uncorreotemporal.com",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "UCT_MCP_TRANSPORT",
+          "description": "Transport mode: stdio (default), streamable-http, or sse",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
