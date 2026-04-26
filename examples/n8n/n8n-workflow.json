@@ -1,0 +1,214 @@
+{
+  "name": "UnCorreoTemporal Automation Flow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.uncorreotemporal.com/api/v1/mailboxes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Create Mailbox",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.com/signup",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.address }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3",
+      "name": "Sign up with service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      },
+      "id": "4",
+      "name": "Wait for Email",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=\"https://api.uncorreotemporal.com/api/v1/mailboxes/\" + $('Create Mailbox').item.json.id + \"/messages\"",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5",
+      "name": "Poll Messages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const messages = $input.all()[0].json;\nif (!messages || messages.length === 0) {\n  throw new Error('No messages found yet. Try polling again.');\n}\n\n// Get latest message\nconst latestMessage = messages[0];\nconst body = latestMessage.body_text || latestMessage.body_html || '';\n\n// Basic regex to extract a 6-digit OTP or a verification link\nconst otpMatch = body.match(/\\b\\d{6}\\b/);\nconst otp = otpMatch ? otpMatch[0] : null;\n\nconst linkMatch = body.match(/(https?:\\/\\/[^\\s]+\\/verify[^\\s'\"]+)/);\nconst link = linkMatch ? linkMatch[0] : null;\n\nreturn {\n  otp,\n  link,\n  subject: latestMessage.subject\n};"
+      },
+      "id": "6",
+      "name": "Extract OTP / Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.com/verify",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "otp",
+              "value": "={{ $json.otp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7",
+      "name": "Call Verification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1450,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Create Mailbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Mailbox": {
+      "main": [
+        [
+          {
+            "node": "Sign up with service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign up with service": {
+      "main": [
+        [
+          {
+            "node": "Wait for Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Email": {
+      "main": [
+        [
+          {
+            "node": "Poll Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Messages": {
+      "main": [
+        [
+          {
+            "node": "Extract OTP / Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract OTP / Link": {
+      "main": [
+        [
+          {
+            "node": "Call Verification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "f7ab0a14-46af-426c-851f-d89052a510ad",
+  "meta": {
+    "instanceId": "uncorreotemporal-mcp-server"
+  },
+  "tags": []
+}
