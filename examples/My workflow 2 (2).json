@@ -1,0 +1,180 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "0f5d4a9b-f0ab-4062-89e7-38bc726ed0ee",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"address\": \"={{ $('Create Mailbox').item.json.address }}\",\n  \"message_id\": \"={{ $json.id }}\",\n  \"session_token\": \"={{ $('Create Mailbox').item.json.session_token }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "8227f8c8-6ae5-428a-9556-18d75d731246",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://uncorreotemporal.com/api/v1/mailboxes?ttl_minutes=10",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "811591ad-dc2e-43ff-bbc0-3b20ec991294",
+      "name": "Create Mailbox"
+    },
+    {
+      "parameters": {
+        "url": "=https://uncorreotemporal.com/api/v1/mailboxes/{{ $json.address }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Session-Token",
+              "value": "={{ $json.session_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "1d34d824-d580-4e7b-a659-74006ab96a1a",
+      "name": "Get Messages"
+    },
+    {
+      "parameters": {
+        "url": "=https://uncorreotemporal.com/api/v1/mailboxes/{{ $json.address }}/messages/{{ $json.message_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Session-Token",
+              "value": "={{ $json.session_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        0
+      ],
+      "id": "64def32d-8c37-43b2-a680-f2835a7cbda4",
+      "name": "Get Full Message"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.body_text || \"\";\n\nconst match = text.match(/\\b\\d{5,6}\\b/);\n\nreturn [\n  {\n    json: {\n      otp: match ? match[0] : null\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "a951b8da-99d5-4f74-aaf8-3065f8955e25",
+      "name": "Extract OTP"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Create Mailbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get Full Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Mailbox": {
+      "main": [
+        [
+          {
+            "node": "Get Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Messages": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Message": {
+      "main": [
+        [
+          {
+            "node": "Extract OTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract OTP": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0f0dc26d-68b9-4e23-84af-c2811cdbc440",
+  "meta": {
+    "instanceId": "e5758cb7f8979f468767d5e09cfcacd07c9de1d03e095000d204e3a82be8c88f"
+  },
+  "nodeGroups": [],
+  "id": "tStSdvd5wJbO44P1",
+  "tags": []
+}
