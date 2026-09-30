@@ -1,0 +1,165 @@
+{
+  "name": "UnCorreoTemporal - Signup Verification",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "uct-n8n-01",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-900, 200]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"base_url\": \"https://uncorreotemporal.com\",\n  \"api_key\": \"uct_replace_me\",\n  \"ttl_minutes\": 30,\n  \"poll_interval_seconds\": 5,\n  \"max_poll_attempts\": 18,\n  \"allowed_verification_hosts\": [\"example.com\"]\n}",
+        "options": {}
+      },
+      "id": "uct-n8n-02",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-680, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.base_url + '/api/v1/mailboxes' }}",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "={{ 'Bearer ' + $('Config').first().json.api_key }}"}]},
+        "sendQuery": true,
+        "queryParameters": {"parameters": [{"name": "ttl_minutes", "value": "={{ $('Config').first().json.ttl_minutes }}"}]},
+        "options": {"timeout": 20000}
+      },
+      "id": "uct-n8n-03",
+      "name": "Create Temporary Inbox",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [-460, 200],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "amount": "={{ $('Config').first().json.poll_interval_seconds }}",
+        "unit": "seconds"
+      },
+      "id": "uct-n8n-04",
+      "name": "Wait Before Poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [-240, 200],
+      "webhookId": "cb3f82f7-d1fd-41f4-a3b4-fd70a9d6725a"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').first().json.base_url + '/api/v1/mailboxes/' + encodeURIComponent($('Create Temporary Inbox').first().json.inbox_id || $('Create Temporary Inbox').first().json.email || $('Create Temporary Inbox').first().json.address) + '/messages' }}",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "={{ 'Bearer ' + $('Config').first().json.api_key }}"}]},
+        "sendQuery": true,
+        "queryParameters": {"parameters": [{"name": "limit", "value": "20"}, {"name": "offset", "value": "0"}]},
+        "options": {"timeout": 20000}
+      },
+      "id": "uct-n8n-05",
+      "name": "List Messages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [-20, 200],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "jsCode": "const state = $getWorkflowStaticData('node');\nstate.attempts = state.attempts || {};\nconst executionId = String($execution.id);\nconst attempt = Number(state.attempts[executionId] || 0) + 1;\nstate.attempts[executionId] = attempt;\nconst raw = $input.all().map((item) => item.json);\nconst messages = raw.length === 1 && Array.isArray(raw[0]) ? raw[0] : raw;\nconst message = messages.find((entry) => entry && (entry.id || entry.message_id));\nconst maxAttempts = Number($('Config').first().json.max_poll_attempts || 18);\nif (!message && attempt >= maxAttempts) {\n  delete state.attempts[executionId];\n  throw new Error('No verification email arrived before max_poll_attempts was reached');\n}\nif (message) delete state.attempts[executionId];\nconst inbox = $('Create Temporary Inbox').first().json;\nreturn [{ json: {\n  found: Boolean(message),\n  message_id: message ? String(message.id || message.message_id) : null,\n  inbox_id: String(inbox.inbox_id || inbox.email || inbox.address || ''),\n  attempt,\n} }];"
+      },
+      "id": "uct-n8n-06",
+      "name": "Select Latest Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [{"id": "message-found", "leftValue": "={{ $json.found }}", "rightValue": "", "operator": {"type": "boolean", "operation": "true", "singleValue": true}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "uct-n8n-07",
+      "name": "Message Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [420, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').first().json.base_url + '/api/v1/mailboxes/' + encodeURIComponent($json.inbox_id) + '/messages/' + encodeURIComponent($json.message_id) }}",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "={{ 'Bearer ' + $('Config').first().json.api_key }}"}]},
+        "options": {"timeout": 20000}
+      },
+      "id": "uct-n8n-08",
+      "name": "Read Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [640, 100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $input.first().json;\nconst body = String(message.body_text || message.body_html || message.text || message.body || '');\nconst otpMatch = body.match(/(?:^|\\D)(\\d{4,8})(?:\\D|$)/);\nconst links = [...body.matchAll(/https?:\\/\\/[^\\s<>'\\\"]+/gi)].map((match) => match[0].replace(/[).,;]+$/, ''));\nconst allowed = ($('Config').first().json.allowed_verification_hosts || []).map((host) => String(host).toLowerCase());\nconst verificationLink = links.find((candidate) => {\n  try {\n    const host = new URL(candidate).hostname.toLowerCase();\n    return allowed.some((entry) => host === entry || host.endsWith(`.${entry}`));\n  } catch { return false; }\n}) || null;\nreturn [{ json: {\n  subject: message.subject || null,\n  from_address: message.from_address || message.from || null,\n  otp_code: otpMatch ? otpMatch[1] : null,\n  verification_link: verificationLink,\n  link_candidates: links,\n} }];"
+      },
+      "id": "uct-n8n-09",
+      "name": "Extract OTP or Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [{"id": "link-found", "leftValue": "={{ $json.verification_link }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty", "singleValue": true}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "uct-n8n-10",
+      "name": "Verification Link Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1080, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.verification_link }}",
+        "options": {"timeout": 20000, "response": {"response": {"neverError": true}}}
+      },
+      "id": "uct-n8n-11",
+      "name": "Open Verification Link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1300, 20]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {"main": [[{"node": "Config", "type": "main", "index": 0}]]},
+    "Config": {"main": [[{"node": "Create Temporary Inbox", "type": "main", "index": 0}]]},
+    "Create Temporary Inbox": {"main": [[{"node": "Wait Before Poll", "type": "main", "index": 0}]]},
+    "Wait Before Poll": {"main": [[{"node": "List Messages", "type": "main", "index": 0}]]},
+    "List Messages": {"main": [[{"node": "Select Latest Message", "type": "main", "index": 0}]]},
+    "Select Latest Message": {"main": [[{"node": "Message Found?", "type": "main", "index": 0}]]},
+    "Message Found?": {"main": [[{"node": "Read Message", "type": "main", "index": 0}], [{"node": "Wait Before Poll", "type": "main", "index": 0}]]},
+    "Read Message": {"main": [[{"node": "Extract OTP or Link", "type": "main", "index": 0}]]},
+    "Extract OTP or Link": {"main": [[{"node": "Verification Link Found?", "type": "main", "index": 0}]]},
+    "Verification Link Found?": {"main": [[{"node": "Open Verification Link", "type": "main", "index": 0}], []]}
+  },
+  "pinData": {},
+  "settings": {"executionOrder": "v1", "timezone": "UTC"}
+}

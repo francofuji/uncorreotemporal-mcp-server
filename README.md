@@ -217,6 +217,7 @@ See `/examples`:
 - `openai_agent_signup.py`
 - `langchain_agent_signup.py`
 - `agent_creates_account.py`
+- `n8n-workflow.json` (see `examples/README.md` for setup and safety notes)
 
 Run dry-run:
 
