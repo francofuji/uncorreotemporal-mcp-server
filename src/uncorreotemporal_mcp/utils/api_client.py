@@ -34,6 +34,9 @@ class ApiClient:
             timeout_seconds = float(os.getenv("UCT_HTTP_TIMEOUT_SECONDS", "20"))
         self.timeout_seconds = timeout_seconds
         self._client: httpx.AsyncClient | None = None
+        # One ApiClient == one MCP tool call. Only its first request carries
+        # X-UCT-Tool-Call so the backend counts tool calls, not polling requests.
+        self._tool_call_sent = False
 
         if not self.api_key:
             raise ApiClientError(
@@ -45,7 +48,7 @@ class ApiClient:
     async def __aenter__(self) -> "ApiClient":
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"},
+            headers=self._base_headers(),
             timeout=self.timeout_seconds,
         )
         return self
@@ -100,12 +103,21 @@ class ApiClient:
             )
         return payload
 
+    def _base_headers(self) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "X-UCT-Client": "mcp",
+        }
+
     async def _request(self, method: str, path: str, **kwargs) -> Any:
+        if not self._tool_call_sent:
+            self._tool_call_sent = True
+            kwargs["headers"] = {**kwargs.get("headers", {}), "X-UCT-Tool-Call": "1"}
         try:
             if self._client is None:
                 async with httpx.AsyncClient(
                     base_url=self.base_url,
-                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    headers=self._base_headers(),
                     timeout=self.timeout_seconds,
                 ) as ephemeral_client:
                     response = await ephemeral_client.request(method, path, **kwargs)
